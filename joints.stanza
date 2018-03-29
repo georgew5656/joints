@@ -1,0 +1,69 @@
+defpackage joints :
+  import core
+  import collections
+  import math
+  import geom
+  import clipper
+  import font
+  import libfive
+
+val wood_thickness = 0.125f * 25.4f
+
+defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
+  var point1 = V2f(-1.0f * base1 / 2.0f ,-1.0f * height / 2.0f)
+  var point2 = V2f(base1 / 2.0f, -1.0f * height / 2.0f)
+  var point3 = V2f(base2 / 2.0f, height / 2.0f)
+  var point4 = V2f(-1.0f * base2 / 2.0f, height / 2.0f)
+  Polygon([Contour([point1, point2, point3, point4])])
+
+;; current place is to slice the joints and stick the pieces together, this would technically only approximate the dovetail joints
+
+;; alternatively could use framing to support 3d construction of the joint (this is recursive)
+
+;; we should probably stack up until we have enough depth for things to work. also we can use pins to hold wood together.
+
+;; would it be better to just use very thin 3d printed objects?
+
+;; currently only works with parallel pieces (end joint)
+defn gooseneck (shape1:Shape, shape2:Shape, attach_point:V3f) :
+  []
+
+;; right angle joints
+defn dovetail () :
+  []
+
+
+defn gooseneck_primitive (width:Float) -> Shape :
+  val length = width * 1.5f
+
+  var close_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness))
+  var far_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness))
+  var middle_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness))
+
+  var neck = extrude(wood_thickness , to-shape(polygon-rect(V2f(width / 4.0f, length / 2.0f))))
+  var tapering_slope = wood_thickness / 2.5f
+
+  var head_top = trapezoid(width / 2.0f, width / 4.0f, length / 2.0f)
+  var head_bottom = trapezoid(width / 2.0f - tapering_slope * wood_thickness, width / 4.0f, length / 2.0f)
+  println(head_top)
+  var head = loft(wood_thickness * 8.0f, to-shape(head_bottom), to-shape(head_top))
+  head
+;;fasteners
+
+defn key () :
+  []
+
+;; add pin hole to wood, will probably have to 3d print the pins.
+defn pin () :
+  []
+
+defn tenon (dimensions:V3f) -> Shape:
+  println(polygon-rect(V2f(x(dimensions), y(dimensions))))
+  var tenon = to-shape(polygon-rect(V2f(x(dimensions), y(dimensions))))
+  extrude(z(dimensions), tenon)
+
+defn main () :
+  var shape1 = gooseneck_primitive(120.0f)
+  save("head.stl", shape1)
+
+main()
