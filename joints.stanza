@@ -7,7 +7,7 @@ defpackage joints :
   import font
   import libfive
 
-val wood_thickness = 0.125f * 25.4f
+val wood_thickness = 1.0f * 25.4f
 
 defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
   var point1 = V2f(-1.0f * base1 / 2.0f ,-1.0f * height / 2.0f)
@@ -28,28 +28,61 @@ defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
 defn gooseneck (shape1:Shape, shape2:Shape, attach_point:V3f) :
   []
 
-;; right angle joints
-defn dovetail () :
-  []
+defn attach_parallel (male:Shape, female:Shape, joint_point:V3f) :
+  var origin_point = z3f(magnitude(joint_point))
+  var male_rotated = rot(joint_point, origin_point, male)
+  var female_rotated = rot(joint_point, origin_point, female)
+  connector = gooseneck_primitive(min(x(male_rotated), x(female_rotated)))
+  male_rotated = union(stack-z([male_rotated, connector]))
+  var connector_female = to-array(align-min-z([connector, female_rotated]))
+  female_rotated = rem(connector_female[1], connectorfemalet[0])
+  male = rot(origin_point, joint_point, male_rotated)
+  female = rot(origin_point, joint_point, female_rotated)
+defn attach_corner (male:Shape, female:Shape, joint_point:V3f) :
+  var origin_point = z3f(magnitude(joint_point))
+  
+defn attach_middle (shape1:Shape, shape2:Shape) :
 
+;; middle right angle joint
+defn dovetail_dado_primitive (width:Float) :
+  var slice_in = tenon(V3f(width, 15.0f, wood_thickness))
 
+  var face_far = polygon-rect(V2f(width * 0.375f , wood_thickness / 2.0f))
+  var face_close = polygon-rect(V2f(width / 4.0f, wood_thickness / 2.0f))
+  var neck = loft(width / 4.0f , to-shape(face_close), to-shape(face-far))
+
+  var hat = tenon(V3f(width / 2.0f, width / 4.0f, wood_thickness / 2.0f))
+  var joint = union(stack-z([slice_in, neck, hat]))
+  joint
+
+;; corner joint
+defn dovetail_blind_primitive (depth:Float) :
+  var tapering_slope = wood_thickness / 10.0f
+  var face_out = polygon-rect(V2f(depth, wood_thickness / 2.0f))
+  var face_in = polygon-rect(V2f(depth, wood_thickness / 2.0f + tapering_slope))
+  var joint = loft(depth, to-shape(face_out), to-shape(face-in))
+  joint
+;; parallel joint
 defn gooseneck_primitive (width:Float) -> Shape :
   val length = width * 1.5f
 
-  var close_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness))
-  var far_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness))
-  var middle_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness))
+  var close_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness / 2.0f))
+  var far_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness / 2.0f))
+  var middle_tenon = tenon(V3f(width / 4.0f, width / 8.0f, wood_thickness) / 2.0f)
 
-  var neck = extrude(wood_thickness , to-shape(polygon-rect(V2f(width / 4.0f, length / 2.0f))))
-  var tapering_slope = wood_thickness / 2.5f
-
+  var neck = extrude(wood_thickness / 2.0f, to-shape(polygon-rect(V2f(width / 4.0f, length / 2.0f))))
+  
+  var tapering_slope = wood_thickness / 10.0f
   var head_top = trapezoid(width / 2.0f, width / 4.0f, length / 2.0f)
-  var head_bottom = trapezoid(width / 2.0f - tapering_slope * wood_thickness, width / 4.0f, length / 2.0f)
-  println(head_top)
-  var head = loft(wood_thickness * 8.0f, to-shape(head_bottom), to-shape(head_top))
-  head
-;;fasteners
+  var head_bottom = trapezoid(width / 2.0f - tapering_slope, width / 4.0f, length / 2.0f)
+  var head = loft(wood_thickness / 2.0f, to-shape(head_bottom), to-shape(head_top))
 
+  var joint = union(stack-z([neck, head]))
+  joint = union(stack-x([far_tenon, joint, close_tenon]))
+  joint = union(stack-y([joint, middle_tenon]))
+  joint
+
+;;fasteners
 defn key () :
   []
 
