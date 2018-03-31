@@ -8,6 +8,7 @@ defpackage joints :
   import libfive
 
 val wood_thickness = 1.0f * 25.4f
+var index = 0
 
 defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
   var point1 = V2f(-1.0f * base1 / 2.0f ,-1.0f * height / 2.0f)
@@ -28,20 +29,25 @@ defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
 defn gooseneck (shape1:Shape, shape2:Shape, attach_point:V3f) :
   []
 
-defn attach_parallel (male:Shape, female:Shape, joint_point:V3f) :
+def to_stl(shape:Shape):
+  save(string-join(["example", to-str(index) , ".stl"]), shape)
+
+
+;; parallel->gooseneck
+;;corner_right->dovetail_blind
+;;middle_right->dovetail_dado
+
+defn add_connectors (male:Shape, female:Shape, joint_point:V3f, key:Float->Shape) :
   var origin_point = z3f(magnitude(joint_point))
   var male_rotated = rot(joint_point, origin_point, male)
   var female_rotated = rot(joint_point, origin_point, female)
-  connector = gooseneck_primitive(min(x(male_rotated), x(female_rotated)))
+  var width_female = x(hi(bounds(female_rotated))) - x(lo(bounds(female_rotated)))
+  var width_male = x(hi(bounds(male_rotated))) - x(lo(bounds(male_rotated)))
+  var connector = key(min(width_female, width_male))
   male_rotated = union(stack-z([male_rotated, connector]))
-  var connector_female = to-array(align-min-z([connector, female_rotated]))
-  female_rotated = rem(connector_female[1], connectorfemalet[0])
+  female_rotated = rem(to-array(align-min-z([connector, female_rotated]))[1], to-array(align-min-z([connector, female_rotated]))[0])
   male = rot(origin_point, joint_point, male_rotated)
   female = rot(origin_point, joint_point, female_rotated)
-defn attach_corner (male:Shape, female:Shape, joint_point:V3f) :
-  var origin_point = z3f(magnitude(joint_point))
-  
-defn attach_middle (shape1:Shape, shape2:Shape) :
 
 ;; middle right angle joint
 defn dovetail_dado_primitive (width:Float) :
@@ -86,9 +92,9 @@ defn gooseneck_primitive (width:Float) -> Shape :
 defn key () :
   []
 
-;; add pin hole to wood, will probably have to 3d print the pins.
-defn pin () :
-  []
+;; add pin hole to wood at specified pin locations, will probably have to 3d print the pins.
+defn pin (pinned_shape:Shape, pin_locations:Tuple<V3f) :
+    
 
 defn tenon (dimensions:V3f) -> Shape:
   println(polygon-rect(V2f(x(dimensions), y(dimensions))))
