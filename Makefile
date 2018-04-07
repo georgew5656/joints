@@ -8,7 +8,11 @@ else
   endif
 endif
 
-all: joints
+all: clean joinery
 
-joints: joints.stanza
-	stanza ./joints.stanza -o joints -ccflags ${LIBS}
+joinery: 
+	stanza joinery.stanza primitives.stanza utilities.stanza connection.stanza -o joinery -ccflags ${LIBS}
+
+clean:
+	rm -f joinery
+	rm -f test*.stl

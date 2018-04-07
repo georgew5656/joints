@@ -1,0 +1,85 @@
+defpackage joinery :
+  import core
+  import collections
+  import math
+  import geom
+  import clipper
+  import font
+  import libfive
+  import primitives
+  import utilities
+  import connection
+
+val wood_thickness:Float = 4.0f
+val num_slices:Int = 6
+
+;;struct, a single shape plus all of its connections, also contains info about the shape.
+public defstruct Piece :
+  base : Shape
+  connections_out : Vector<Connection>()
+  connections_in : Vector<Connection>()
+  pin_diameters : Vector<Float>
+  pin_locations : Vector<V3f>
+
+public defstruct Connection :
+  male : shape
+  female : shapes
+  male_point : V3f
+  female_point : V3f
+  joint : (Float,Float) -> [Shape, Tuple<Shape>]
+  width : Float
+  length : Float
+defn piece_to_svg (piece:Piece) :
+  var base_shape = base(piece)
+  var pins = Array<Shape>()
+  for i from 0 to length(connections_out) do :
+    var connection = connections_out[i]
+    base_shape = add_connection_male(base_shape, male_point(connection), joint(connection), width(connection), length(connection))
+
+  for i from 0 to length(connection_in) do :
+    var connection = connections_in[i]
+    base_shape = add_connection_female(base_shape, female_point(connection), joint(connection), width(connection), length(connection))
+
+  for i from 0 to length(pin_locations) do :
+    [base_shape, pin_piece] = add_pin(base_shape, pin_locations(piece), pin_diameters(piece))
+    add(pins, pin_piece)
+  to_stl(union(pins))
+  var slices = Array<Polygon>(num_slices)
+  for i from 0 to num_slices do :
+    slices[i] = slice(wood_thickness * to-float(i) / to-float(num_slices), base_shape)
+  to_svg(to-tuple(slices))
+;;Test Functions
+defn test_gooseneck () :
+  var side1 = extrude(wood_thickness, rect(10.0f, 10.0f))
+  var side2 = extrude(wood_thickness, rect(10.0f, 10.0f))
+  var connected = to-array<Shape>(attach(side1, connection_point(bounds(side1), hi, mid, mid),side2, connection_point(bounds(side2), lo, mid, mid)))
+  var c_points = [to-array<V3f>([connection_point(bounds(connected[0]), hi, mid, mid),  connection_point(bounds(connected[0]), hi, mid, mid) ])]
+  val connected_pieces = to-array<Shape>(add_connectors(connected[1], connected[0], c_points, gooseneck_primitive, 4.0f, 6.0f))
+  to_disk(connected_pieces[0])
+  to_disk(connected_pieces[1])
+
+defn test_dado () :
+  var shape1 = extrude(wood_thickness, rect(20.0f, 10.0f))
+  var shape2 = extrude(wood_thickness, rect(10.0f, 20.0f))
+  var connected = to-array<Shape>(attach(shape1, connection_point(bounds(shape1), mid, lo, mid), shape2, connection_point(bounds(shape2), mid, hi, mid)))
+  var c_points = [to-array<V3f>([connection_point(bounds(connected[0]), mid, lo, mid), connection_point(bounds(connected[0]), mid, lo, mid)])]
+  val connected_pieces = to-array<Shape>(add_connectors(connected[1], connected[0],c_points, dovetail_dado_primitive, 6.0f, 4.0f))
+  to_disk(connected_pieces[0])
+  to_disk(connected_pieces[1])
+
+defn test_dovetail () :
+  var shape1 = extrude(wood_thickness, rect(5.0f, 15.0f))
+  var shape2 = extrude(wood_thickness, rect(15.0f, 5.0f))
+  var offset = 2.5f / 15.0f
+  var custom = point_selector(V3f(1.0f - offset, 1.0f - offset, 1.0f - offset))
+  var connected = to-array<Shape>(attach(shape1, connection_point(bounds(shape1) , lo, custom, mid), shape2, connection_point(bounds(shape2), hi, mid, mid)))
+  var c_points = [to-array<V3f>([connection_point(bounds(connected[1]), hi, mid, mid), connection_point(bounds(connected[0]), lo, custom, mid)])]
+  val connected_pieces = to-array<Shape>(add_connectors(connected[1], connected[0], c_points, dovetail_blind_primitive, 1.0f, 5.0f))
+  to_disk(union([connected_pieces[0]]))
+  to_disk(union([connected_pieces[1]]))
+
+defn main () :
+  test_gooseneck()
+  test_dado()
+  test_dovetail()
+main()

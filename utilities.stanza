@@ -1,0 +1,43 @@
+defpackage utilities :
+  import core
+  import collections
+  import math
+  import geom
+  import clipper
+  import font
+  import libfive
+
+var ind:Int = 0
+
+;; Utility Functions
+
+;;based off of x,y,z selector functions, generate a connection point between two shapes.
+public defn connection_point (bnds:Box3f, d1:Box3f -> V3f, d2:Box3f -> V3f, d3:Box3f -> V3f)  -> V3f :
+  V3f(x(d1(bnds)), y(d2(bnds)), z(d3(bnds)))
+
+public defn point_selector (proportions:V3f) -> (Box3f -> V3f) :
+  defn custom_point_selector (b:Box3f) -> V3f :
+    var distance = minus(hi(b), lo(b))
+    var x1 = x(lo(b)) + x(distance) * x(proportions)
+    var y1 = y(lo(b)) + y(distance) * y(proportions)
+    var z1 = z(lo(b)) + z(distance) * z(proportions)
+    V3f(x1, y1, z1)
+  custom_point_selector
+
+
+;;special point selector that is frequently used
+public val mid = point_selector(V3f(0.5f, 0.5f, 0.5f))
+
+;;write shape to stl file
+public defn to_stl (shape:Shape):
+  save(string-join(["test", to-string(ind), ".stl"]), shape)
+  ind = ind + 1
+
+;;write shape to svg file
+public defn to_svg(shape:Shape):
+  save-layout(["test", to-string(ind), ".stl"], shape)
+
+;;generate_point to write to stl for debugging
+public defn generate_point (location:V3f) -> Shape :
+  var c = cube(1.0f)
+  mov(location, c)

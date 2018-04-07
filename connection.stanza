@@ -1,0 +1,56 @@
+defpackage connection :
+  import core
+  import collections
+  import math
+  import geom
+  import clipper
+  import font
+  import libfive
+  import primitives
+  import utilities
+
+
+val wood_thickness:Float = 4.0f
+
+;;Connection Functions
+
+;; add pin hole to wood at specified pin locations, will probably have to 3d print the pins.
+public defn add_pin (shape:Shape, pin_location:V3f, pin_diameter:Float) :
+  var pinned_shape = shape
+  val primitive = pin(pin_diameter, wood_thickness)
+  val pin_centered = mov(pin_location, primitive)
+  pinned_shape = rem(pinned_shape, pin_centered)
+  [pinned_shape, pin_centered]
+
+;; add connector joints to the male, female shapes. this function is for debugging only
+public defn add_connectors (male:Shape, female:Shape, connection_points:Tuple<Array<V3f>>, key:(Float, Float) -> [Shape, Tuple<Shape>], width:Float, l:Float) -> Tuple<Shape>:
+  val cp_array = to-array<Array<V3f>>(connection_points)
+  var male_joints = male
+  var female_joints = female
+  for i in 0 to length(cp_array) do :
+    var connection_point = cp_array[i]
+    male_joints = add_connection_male(male_joints, connection_point[0], key, width, l)
+    female_joints = add_connection_female(female_joints, connection_point[1], key, width, l)
+  [male_joints, female_joints]
+
+public defn add_connection_male (shape:Shape, cp:V3f, key:(Float, Float) -> [Shape, Tuple<Shape>], width:Float, l:Float) -> Shape:
+  var rotated_cp = y3f(magnitude(cp))
+  var rotated_shape = rot(cp, rotated_cp, shape)
+  val [connector, pin_locations] = key(width, l)
+  var pinned_connector = connector
+  for pin_location in pin_locations do :
+    pinned_connector = rem(pinned_connector, pin_location)
+  var connector_cp = connection_point(bounds(connector), mid, lo, mid)
+  var joint = union(attach(pinned_connector, connector_cp, rotated_shape, rotated_cp))
+  rot(rotated_cp, cp, joint)
+
+public defn add_connection_female (shape:Shape, cp:V3f, key:(Float, Float) -> [Shape, Tuple<Shape>], width:Float, length:Float) -> Shape:
+  var rotated_cp = y3f(magnitude(cp))
+  var rotated_shape = rot(cp, rotated_cp, shape)
+  val [connector, pin_locations] = key(width, length)
+  var pinned_connector = connector
+  for pin_location in pin_locations do :
+    pinned_connector = bit-or(pinned_connector, pin_location)
+  var connector_cp = connection_point(bounds(connector), mid, lo, mid)
+  val connected = to-array<Shape>(attach(pinned_connector, connector_cp, rotated_shape, rotated_cp))
+  rot(rotated_cp, cp, rem(connected[1], connected[0]))
