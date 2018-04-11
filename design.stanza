@@ -1,0 +1,30 @@
+defpackage design :
+  import core
+  import collections
+  import math
+  import geom
+  import clipper
+  import font
+  import libfive
+  import classes
+
+defn new_design (joint_size:Float, wood_thickness:float) :
+  Design(Array<Connection>(), Array<Shape>(), joint_size, joint_size * 1.5f, joint_size / 4.0f, wood_thickness)
+
+defn add_shape (design:Design, shape:Shape) -> Int:
+  val i:Int = length(shapes(design))
+  add(shapes(design), shape)
+  i
+
+defn get_shape (design:Design, index:Int) :
+    shapes(design)[index]
+
+defn set_shape (design:Design, index:Int, shape:Shape) :
+    shapes(design)[index] = shape
+
+defn add_conection (design:Design, male_index:Int, female_index:Int, cp:V3f, cangle:V3f, key:(Float,Float) -> [Shape, Tuple<Shape>]) :
+  val connection = Connection(male_index, female_index, cp, cangle, key)
+  add(connections(design)
+
+defn write_design (design:Design, filename:String) :
+  add_connectors(design)

@@ -1,0 +1,23 @@
+defpackage classes :
+  import core
+  import collections
+  import math
+  import geom
+  import clipper
+  import font
+  import libfive
+
+public defstruct Design :
+  connections : Array<Connection>()
+  shapes = Array<Shape>()
+  jointWidth : Float
+  jointLength : Float
+  pinDiameter : Float
+  woodThickness : Float
+
+public defstruct Connection :
+  maleIndex : Int
+  femaleIndex : Int
+  cPoint : V3f
+  cAngle : V3f
+  joint : (Float,Float) -> [Shape, Tuple<Shape>]

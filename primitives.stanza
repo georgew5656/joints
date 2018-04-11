@@ -18,48 +18,48 @@ public defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
   Polygon([Contour([point1, point2, point3, point4])])
 
 ;;perpindicular joint
-public defn dovetail_dado_primitive (width:Float, length:Float) -> [Shape, Tuple<Shape>]:
+public defn dovetail_dado_primitive (width:Float, length:Float, wood_thickness:Float) -> [Shape, Tuple<Shape>]:
   var slice_in = tenon(V3f(width, length / 6.0f, wood_thickness))
   var neck = extrude(wood_thickness / 2.0f ,to-shape(trapezoid(width / 4.0f, width / 2.0f ,length / 2.0f)))
   var hat = tenon(V3f(width * 2.0f / 3.0f, width / 3.0f, wood_thickness / 2.0f))
-  neck = union(attach(slice_in, connection_point(bounds(slice_in), mid, hi, hi), neck, connection_point(bounds(neck), mid, lo, hi)))
-  val pin_location = mov(connection_point(bounds(neck), mid, mid, mid), pin(width / 8.0f, wood_thickness))
-  val joint = union(attach(hat, connection_point(bounds(hat), mid, lo, hi), neck, connection_point(bounds(neck), mid, hi, hi)))
+  neck = union(attach(slice_in, connection_point(bounds(slice_in), V3f(0.5f, 1.0f, 1.0f)), neck, connection_point(bounds(neck), V3f(0.5f, 0.0f, 1.0f))))
+  val pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.5f, 0.5f)), pin(width / 8.0f, wood_thickness))
+  val joint = union(attach(hat, connection_point(bounds(hat), V3f(0.5f, 0.0f, 1.0f)), neck, connection_point(bounds(neck), V3f(0.5f, 1.0f, 1.0f))))
   [joint, [pin_location]]
 
 ;; corner joint
-public defn dovetail_blind_primitive (width:Float, length:Float) -> [Shape, Tuple<Shape>]:
+public defn dovetail_blind_primitive (width:Float, length:Float, wood_thickness:Float) -> [Shape, Tuple<Shape>]:
   var face = trapezoid(width, 2.0f * width, length)
   var joint = extrude(length, to-shape(face))
-  var pin_location = mov(connection_point(bounds(joint), mid, mid, mid), pin(length / 8.0f, wood_thickness))
+  var pin_location = mov(connection_point(bounds(joint), V3f(0.5f, 0.5f, 0.5f)), pin(length / 8.0f, wood_thickness))
   [rot-z(90.0f, rot-y(90.0f, joint)), [pin_location]]
 
 ;; parallel joint
-public defn gooseneck_primitive (width:Float, length:Float) -> [Shape, Tuple<Shape>] :
+public defn gooseneck_primitive (width:Float, length:Float, wood_thickness:Float) -> [Shape, Tuple<Shape>] :
   var left_tenon = tenon(V3f(width / 3.0f, width / 6.0f, wood_thickness / 2.0f))
   var right_tenon = tenon(V3f(width / 3.0f, width / 6.0f, wood_thickness / 2.0f))
   var middle_tenon = tenon(V3f(width / 3.0f, width / 6.0f, wood_thickness / 2.0f))
 
   var neck = extrude(wood_thickness / 2.0f, to-shape(polygon-rect(V2f(width / 3.0f, length * 0.75f))))
 
-  var lower_pin_location = mov(connection_point(bounds(neck), mid ,point_selector(V3f(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f)) ,mid), pin(width / 8.0f, wood_thickness))
-  var upper_pin_location = mov(connection_point(bounds(neck), mid, point_selector(V3f(2.0f / 3.0f, 2.0f / 3.0f, 2.0f / 3.0f)), mid), pin(width / 8.0f, wood_thickness))
+  var lower_pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.33f, 0.5f)), pin(width / 8.0f, wood_thickness))
+  var upper_pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.67f, 0.5f)), pin(width / 8.0f, wood_thickness))
 
 
-  neck = union(attach(left_tenon, connection_point(bounds(left_tenon), hi, lo, mid), neck, connection_point(bounds(neck), lo, lo, mid)))
-  neck = union(attach(right_tenon, connection_point(bounds(right_tenon), lo, lo, mid), neck, connection_point(bounds(neck), hi, lo, mid)))
+  neck = union(attach(left_tenon, connection_point(bounds(left_tenon), V3f(1.0f, 0.0f, 0.5f)), neck, connection_point(bounds(neck), V3f(0.0f, 0.0f, 0.5f))))
+  neck = union(attach(right_tenon, connection_point(bounds(right_tenon), V3f(0.0f, 0.0f, 0.5f)), neck, connection_point(bounds(neck), V3f(1.0f, 0.0f, 0.5f))))
 
   var tapering_slope = wood_thickness / 10.0f
   var head_top = trapezoid(width / 2.0f, width / 4.0f, length * 0.25f)
   var head_bottom = trapezoid(width / 2.0f - tapering_slope, width / 4.0f - tapering_slope, length * 0.25f)
   var head = loft(wood_thickness / 2.0f, to-shape(head_bottom), to-shape(head_top))
 
-  var joint = union(attach(head, connection_point(bounds(head), mid, lo, mid), neck, connection_point(bounds(neck), mid, hi, mid)))
-  joint = union(attach(middle_tenon, connection_point(bounds(middle_tenon), mid, lo, hi), joint, connection_point(bounds(joint), mid, lo, lo)))
+  var joint = union(attach(head, connection_point(bounds(head), V3f(0.5f, 0.0f, 0.5f)), neck, connection_point(bounds(neck), V3f(0.5f, 1.0f, 0.5f))))
+  joint = union(attach(middle_tenon, connection_point(bounds(middle_tenon), V3f(0.5f, 0.0f, 1.0f)), joint, connection_point(bounds(joint), V3f(0.5f, 0.0f, 0.0f))))
   [joint, [lower_pin_location, upper_pin_location]]
 
-public defn pin (pin_diameter:Float, pin_height:Float) :
-  cylinder(pin_diameter, pin_height)
+public defn pin (pin_diameter:Float, wood_thickness:Float) :
+  cylinder(pin_diameter, wood_thickness)
 
 
 public defn tenon (dimensions:V3f) -> Shape:

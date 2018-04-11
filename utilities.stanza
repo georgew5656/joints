@@ -6,14 +6,15 @@ defpackage utilities :
   import clipper
   import font
   import libfive
+  import classes
 
 var ind:Int = 0
 
 ;; Utility Functions
 
 ;;based off of x,y,z selector functions, generate a connection point between two shapes.
-public defn connection_point (bnds:Box3f, d1:Box3f -> V3f, d2:Box3f -> V3f, d3:Box3f -> V3f)  -> V3f :
-  V3f(x(d1(bnds)), y(d2(bnds)), z(d3(bnds)))
+public defn connection_point (bnds:Box3f, props: V3f)  -> V3f :
+  point_selector(props)(bnds)
 
 public defn point_selector (proportions:V3f) -> (Box3f -> V3f) :
   defn custom_point_selector (b:Box3f) -> V3f :
@@ -24,18 +25,16 @@ public defn point_selector (proportions:V3f) -> (Box3f -> V3f) :
     V3f(x1, y1, z1)
   custom_point_selector
 
-
-;;special point selector that is frequently used
-public val mid = point_selector(V3f(0.5f, 0.5f, 0.5f))
-
-;;write shape to stl file
+;;Functions for writing to disk
 public defn to_stl (shape:Shape):
   save(string-join(["test", to-string(ind), ".stl"]), shape)
   ind = ind + 1
 
-;;write shape to svg file
-public defn to_svg(shape:Shape):
-  save-layout(["test", to-string(ind), ".stl"], shape)
+public defn to_svg (slices:Tuple<Polygon>) :
+  val size = V2f(25.0f, 10.0f)
+  val sheets = nest(slices, size, { polygon-rect(xy(_)) }, 1.0f)
+  for (sheet in sheets, i in 0 to false) do :
+    svg(sheet, to-string $ ("%_-sheet-%_.svg" % ["test", i]), dims-to-box $ size)
 
 ;;generate_point to write to stl for debugging
 public defn generate_point (location:V3f) -> Shape :
