@@ -10,43 +10,58 @@ defpackage tests :
   import utilities
   import connection
   import classes
-
+  import design
 val num_slices:Int = 6
 
 defn test_gooseneck () :
   val design = new_design(1.0f,2.0f)
-  var side1 = extrude(wood_thickness, rect(10.0f, 10.0f))
-  var side2 = extrude(wood_thickness, rect(10.0f, 10.0f))
-  [side1, side2] = attach(side1, connection_point(bounds(side1), V3f(1.0f, 0.5f, 0.5f)),side2, connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f)))
-  val index1 = add_shape(design, side1)
-  val index2 = add_shape(design, side2)
+  var side1 = extrude(woodThickness(design), rect(10.0f, 10.0f))
+  var side2 = extrude(woodThickness(design), rect(10.0f, 10.0f))
+  val sides_attached = attach(side1, connection_point(bounds(side1), V3f(1.0f, 0.5f, 0.5f)),side2, connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f)))
+  val side1_attach = to-array<Shape>(sides_attached)[0]
+  val side2_attach = to-array<Shape>(sides_attached)[1]
+  val index1 = add_shape(design, side1_attach)
+  val index2 = add_shape(design, side2_attach)
 
-  var c_point = connection_point(bounds(side1), V3f(1.0f, 0.5f, 0.5f))
+  var c_point = connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f))
   var c_angle = V3f(1.0f, 0.0f, 0.0f)
   add_connection(design, index1, index2, c_point, c_angle, gooseneck_primitive)
-  write_design(design, "gooseneck_test")
-;;defn test_dado () :
-;;  var shape1 = extrude(wood_thickness, rect(20.0f, 10.0f))
-;;  var shape2 = extrude(wood_thickness, rect(10.0f, 20.0f))
-;;  var connected = to-array<Shape>(attach(shape1, connection_point(bounds(shape1), V3f(0.5f, 0.0f, 0.5f)), shape2, connection_point(bounds(shape2), V3f(0.5f, 1.0f, 0.5f))))
-;;  var c_points = [to-array<V3f>([connection_point(bounds(connected[0]), V3f(0.5f, 0.0f, 0.5f)), connection_point(bounds(connected[0]), V3f(0.5f, 0.0f, 0.5f))])]
-;;  val connected_pieces = to-array<Shape>(add_connectors(connected[1], connected[0],c_points, dovetail_dado_primitive, 6.0f, 4.0f))
-;;  to_stl(connected_pieces[0])
-;;  to_stl(connected_pieces[1])
+  write_design_debug(design, "gooseneck_test")
+defn test_dado () :
+  val design = new_design(1.0f, 2.0f)
+  var side1 = extrude(woodThickness(design), rect(10.0f, 10.0f))
+  var side2 = extrude(woodThickness(design), rect(10.0f, 10.0f))
+  val sides_attached = attach(side1, connection_point(bounds(side1), V3f(1.0f, 0.5f, 0.5f)),side2, connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f)))
+  val side1_attach = to-array<Shape>(sides_attached)[0]
+  val side2_attach = to-array<Shape>(sides_attached)[1]
+  val index1 = add_shape(design, side1_attach)
+  val index2 = add_shape(design, side2_attach)
 
-;;defn test_dovetail () :
-;;  var shape1 = extrude(wood_thickness, rect(5.0f, 15.0f))
-;;  var shape2 = extrude(wood_thickness, rect(15.0f, 5.0f))
-;;  var offset = 2.5f / 15.0f
-;;  var custom = point_selector(V3f(1.0f - offset, 1.0f - offset, 1.0f - offset))
-;;  var connected = to-array<Shape>(attach(shape1, connection_point(bounds(shape1) , V3f(0.0f, 1.0f - offset, 0.5f)), shape2, connection_point(bounds(shape2), V3f(1.0f, 0.5f, 0.5f))))
-;;  var c_points = [to-array<V3f>([connection_point(bounds(connected[1]), V3f(1.0f, 0.5f, 0.5f)), connection_point(bounds(connected[0]), V3f(0.0f, 1.0f - offset, 0.5f))])]
-;;  val connected_pieces = to-array<Shape>(add_connectors(connected[1], connected[0], c_points, dovetail_blind_primitive, 1.0f, 5.0f))
-;;  to_stl(union([connected_pieces[0]]))
-;;  to_stl(union([connected_pieces[1]]))
+  var c_point = connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f))
+  var c_angle = V3f(1.0f, 0.0f, 0.0f)
+  add_connection(design, index1, index2, c_point, c_angle, dovetail_dado_primitive)
+  write_design_debug(design, "dovetail_dado_test")
 
+defn test_dovetail () :
+  val design = new_design(1.0f, 2.0f)
+  var side1 = extrude(woodThickness(design), rect(10.0f, 10.0f))
+  var side2 = extrude(woodThickness(design), rect(10.0f, 10.0f))
+  val sides_attached = attach(side1, connection_point(bounds(side1), V3f(1.0f, 0.5f, 0.5f)),side2, connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f)))
+  val side1_attach = to-array<Shape>(sides_attached)[0]
+  val side2_attach = to-array<Shape>(sides_attached)[1]
+  val index1 = add_shape(design, side1_attach)
+  val index2 = add_shape(design, side2_attach)
+
+  var c_point = connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f))
+  var c_angle = V3f(1.0f, 0.0f, 0.0f)
+  add_connection(design, index1, index2, c_point, c_angle, dovetail_blind_primitive)
+  write_design_debug(design, "dovetail_test")
+
+defn test_cube () :
+  val d = 5.0f
+  val wt = 1.0f
+  val jw = 0.5f
+  cube_design(d, jw, wt)
 defn main () :
-  test_gooseneck()
-  test_dado()
-  test_dovetail()
+  test_cube()
 main()

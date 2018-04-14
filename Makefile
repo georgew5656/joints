@@ -11,7 +11,7 @@ endif
 all: clean tests
 
 tests:
-	stanza tests.stanza primitives.stanza utilities.stanza connection.stanza classes.stanza -o joinery -ccflags ${LIBS}
+	stanza tests.stanza primitives.stanza utilities.stanza connection.stanza classes.stanza design.stanza -o joinery -ccflags ${LIBS}
 
 clean:
 	rm -f tests

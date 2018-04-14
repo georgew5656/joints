@@ -16,6 +16,9 @@ var ind:Int = 0
 public defn connection_point (bnds:Box3f, props: V3f)  -> V3f :
   point_selector(props)(bnds)
 
+public defn center_z (shape:Shape) -> Shape :
+  mov-z(-0.5f * (z(hi(bounds(shape))) + z(lo(bounds(shape)))), shape)
+
 public defn point_selector (proportions:V3f) -> (Box3f -> V3f) :
   defn custom_point_selector (b:Box3f) -> V3f :
     var distance = minus(hi(b), lo(b))
@@ -27,6 +30,7 @@ public defn point_selector (proportions:V3f) -> (Box3f -> V3f) :
 
 ;;Functions for writing to disk
 public defn to_stl (shape:Shape):
+  set-resolution(50.0f)
   save(string-join(["test", to-string(ind), ".stl"]), shape)
   ind = ind + 1
 

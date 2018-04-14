@@ -8,8 +8,8 @@ defpackage classes :
   import libfive
 
 public defstruct Design :
-  connections : Array<Connection>()
-  shapes = Array<Shape>()
+  connections : Vector<Connection>
+  shapes : Vector<Shape>
   jointWidth : Float
   jointLength : Float
   pinDiameter : Float
@@ -20,4 +20,25 @@ public defstruct Connection :
   femaleIndex : Int
   cPoint : V3f
   cAngle : V3f
-  joint : (Float,Float) -> [Shape, Tuple<Shape>]
+  joint : (Float,Float, Float) -> [Shape, Tuple<Shape>]
+
+public defn new_design (joint_size:Float, wood_thickness:Float) :
+  Design(Vector<Connection>(), Vector<Shape>(), joint_size, joint_size * 1.5f, joint_size / 4.0f, wood_thickness)
+
+public defn add_shape (design:Design, shape:Shape) -> Int:
+  val i:Int = length(shapes(design))
+  add(shapes(design), shape)
+  i
+
+public defn get_shape (design:Design, index:Int) :
+  shapes(design)[index]
+
+public defn set_shape (design:Design, index:Int, shape:Shape) :
+  shapes(design)[index] = shape
+
+public defn num_shapes (design:Design) :
+  length(shapes(design))
+
+public defn add_connection (design:Design, male_index:Int, female_index:Int, cp:V3f, cangle:V3f, key:(Float,Float,Float) -> [Shape, Tuple<Shape>]) :
+  val connection = Connection(male_index, female_index, cp, cangle, key)
+  add(connections(design), connection)

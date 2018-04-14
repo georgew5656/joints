@@ -23,15 +23,15 @@ public defn dovetail_dado_primitive (width:Float, length:Float, wood_thickness:F
   var neck = extrude(wood_thickness / 2.0f ,to-shape(trapezoid(width / 4.0f, width / 2.0f ,length / 2.0f)))
   var hat = tenon(V3f(width * 2.0f / 3.0f, width / 3.0f, wood_thickness / 2.0f))
   neck = union(attach(slice_in, connection_point(bounds(slice_in), V3f(0.5f, 1.0f, 1.0f)), neck, connection_point(bounds(neck), V3f(0.5f, 0.0f, 1.0f))))
-  val pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.5f, 0.5f)), pin(width / 8.0f, wood_thickness))
+  val pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.5f, 0.5f)), pin_primitive(width / 8.0f, wood_thickness))
   val joint = union(attach(hat, connection_point(bounds(hat), V3f(0.5f, 0.0f, 1.0f)), neck, connection_point(bounds(neck), V3f(0.5f, 1.0f, 1.0f))))
-  [joint, [pin_location]]
+  [mov-z(0.5f,joint), [mov-z(0.5f,pin_location)]]
 
 ;; corner joint
 public defn dovetail_blind_primitive (width:Float, length:Float, wood_thickness:Float) -> [Shape, Tuple<Shape>]:
-  var face = trapezoid(width, 2.0f * width, length)
+  var face = trapezoid(width / 2.0f, width, length)
   var joint = extrude(length, to-shape(face))
-  var pin_location = mov(connection_point(bounds(joint), V3f(0.5f, 0.5f, 0.5f)), pin(length / 8.0f, wood_thickness))
+  var pin_location = mov(connection_point(bounds(joint), V3f(0.5f, 0.5f, 0.5f)), pin_primitive(length / 8.0f, wood_thickness))
   [rot-z(90.0f, rot-y(90.0f, joint)), [pin_location]]
 
 ;; parallel joint
@@ -42,8 +42,8 @@ public defn gooseneck_primitive (width:Float, length:Float, wood_thickness:Float
 
   var neck = extrude(wood_thickness / 2.0f, to-shape(polygon-rect(V2f(width / 3.0f, length * 0.75f))))
 
-  var lower_pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.33f, 0.5f)), pin(width / 8.0f, wood_thickness))
-  var upper_pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.67f, 0.5f)), pin(width / 8.0f, wood_thickness))
+  var lower_pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.33f, 0.5f)), pin_primitive(width / 8.0f, wood_thickness))
+  var upper_pin_location = mov(connection_point(bounds(neck), V3f(0.5f, 0.67f, 0.5f)), pin_primitive(width / 8.0f, wood_thickness))
 
 
   neck = union(attach(left_tenon, connection_point(bounds(left_tenon), V3f(1.0f, 0.0f, 0.5f)), neck, connection_point(bounds(neck), V3f(0.0f, 0.0f, 0.5f))))
@@ -56,9 +56,9 @@ public defn gooseneck_primitive (width:Float, length:Float, wood_thickness:Float
 
   var joint = union(attach(head, connection_point(bounds(head), V3f(0.5f, 0.0f, 0.5f)), neck, connection_point(bounds(neck), V3f(0.5f, 1.0f, 0.5f))))
   joint = union(attach(middle_tenon, connection_point(bounds(middle_tenon), V3f(0.5f, 0.0f, 1.0f)), joint, connection_point(bounds(joint), V3f(0.5f, 0.0f, 0.0f))))
-  [joint, [lower_pin_location, upper_pin_location]]
+  [mov-z(0.5f, joint), [lower_pin_location, upper_pin_location]]
 
-public defn pin (pin_diameter:Float, wood_thickness:Float) :
+public defn pin_primitive (pin_diameter:Float, wood_thickness:Float) :
   cylinder(pin_diameter, wood_thickness)
 
 

@@ -7,24 +7,35 @@ defpackage design :
   import font
   import libfive
   import classes
+  import utilities
+  import connection
+  import primitives
+public defn write_design_debug (design:Design, filename:String) :
+  val pins:Tuple<Shape> = add_connectors(design)
+  for i in 0 to num_shapes(design) do :
+    to_stl(get_shape(design, i))
 
-defn new_design (joint_size:Float, wood_thickness:float) :
-  Design(Array<Connection>(), Array<Shape>(), joint_size, joint_size * 1.5f, joint_size / 4.0f, wood_thickness)
-
-defn add_shape (design:Design, shape:Shape) -> Int:
-  val i:Int = length(shapes(design))
-  add(shapes(design), shape)
-  i
-
-defn get_shape (design:Design, index:Int) :
-    shapes(design)[index]
-
-defn set_shape (design:Design, index:Int, shape:Shape) :
-    shapes(design)[index] = shape
-
-defn add_conection (design:Design, male_index:Int, female_index:Int, cp:V3f, cangle:V3f, key:(Float,Float) -> [Shape, Tuple<Shape>]) :
-  val connection = Connection(male_index, female_index, cp, cangle, key)
-  add(connections(design)
-
-defn write_design (design:Design, filename:String) :
-  add_connectors(design)
+public defn cube_design (d:Float, jw:Float, wt:Float) :
+  val design = new_design(jw, wt)
+  val base = extrude(woodThickness(design), square(d))
+  val edge_width = woodThickness(design) / 2.0f / d
+  val side_primitive1 = rot-y(90.0f, rot-x(90.0f, extrude(woodThickness(design), rect(d - woodThickness(design), d))))
+  val side_primitive2 = rot-z(90.0f, rot-x(90.0f, extrude(woodThickness(design), rect(d - woodThickness(design), d - woodThickness(design)))))
+  val side1 = attach_shapes(side_primitive1, V3f(0.5f, 0.5f, 0.0f), base, V3f(0.5f, edge_width, 1.0f))
+  val side2 = attach_shapes(side_primitive1, V3f(0.5f, 0.5f, 0.0f), base, V3f(0.5f, 1.0f - edge_width, 1.0f))
+  val side3 = attach_shapes(side_primitive2, V3f(0.5f, 0.5f, 0.0f), base, V3f(edge_width, 0.5f, 1.0f))
+  val side4 = attach_shapes(side_primitive2, V3f(0.5f, 0.5f, 0.0f), base, V3f(1.0f - edge_width, 0.5f, 1.0f))
+  val index_base =  add_shape(design, base)
+  val index_1 = add_shape(design, side1)
+  val index_2 = add_shape(design, side2)
+  val index_3 = add_shape(design, side3)
+  val index_4 = add_shape(design, side4)
+  add_connection(design, index_1, index_base, connection_point(bounds(side1), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
+  add_connection(design, index_2, index_base, connection_point(bounds(side2), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
+  add_connection(design, index_3, index_base, connection_point(bounds(side3), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
+  add_connection(design, index_4, index_base, connection_point(bounds(side4), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
+  write_design_debug(design, "cube_test")
+;;Attach shape 1 to shape 2 based on points and return shape1
+defn attach_shapes (shape1:Shape, location1:V3f, shape2:Shape, location2:V3f) -> Shape :
+  val attached_shapes = attach(shape1, connection_point(bounds(shape1), location1), shape2, connection_point(bounds(shape2), location2))
+  to-array<Shape>(attached_shapes)[0]
