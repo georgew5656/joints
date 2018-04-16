@@ -10,10 +10,25 @@ defpackage design :
   import utilities
   import connection
   import primitives
+
 public defn write_design_debug (design:Design, filename:String) :
   val pins:Tuple<Shape> = add_connectors(design)
   for i in 0 to num_shapes(design) do :
     to_stl(get_shape(design, i))
+
+public defn write_design (design:Design, filename:String, num_slices:Int) :
+  val pins:Tuple<Shape> = add_connectors(design)
+  for pin in pins do :
+    to_stl(resize-z(to-float(num_slices) * mm_to_point * inch_to_mm * 0.25f, pin))
+  for i in 0 to num_shapes(design) do :
+    var shape = lay_flat(get_shape(design, i))
+    shape = mov-z(-1.0f * z(lo(bounds(shape))), shape)
+    var shape_thickness = range_axis(shape, z)
+    var slices = Array<Polygon>(num_slices)
+    for j in 0 to num_slices do :
+      var slc = slice(to-float(j) / to-float(num_slices) * shape_thickness, shape)
+      slices[j] = slc
+    to_svg(to-tuple(slices), "fabricationtest")
 
 public defn cube_design (d:Float, jw:Float, wt:Float) :
   val design = new_design(jw, wt)
@@ -30,12 +45,46 @@ public defn cube_design (d:Float, jw:Float, wt:Float) :
   val index_2 = add_shape(design, side2)
   val index_3 = add_shape(design, side3)
   val index_4 = add_shape(design, side4)
-  add_connection(design, index_1, index_base, connection_point(bounds(side1), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
-  add_connection(design, index_2, index_base, connection_point(bounds(side2), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
-  add_connection(design, index_3, index_base, connection_point(bounds(side3), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
-  add_connection(design, index_4, index_base, connection_point(bounds(side4), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), dovetail_dado_primitive)
-  write_design_debug(design, "cube_test")
-;;Attach shape 1 to shape 2 based on points and return shape1
-defn attach_shapes (shape1:Shape, location1:V3f, shape2:Shape, location2:V3f) -> Shape :
-  val attached_shapes = attach(shape1, connection_point(bounds(shape1), location1), shape2, connection_point(bounds(shape2), location2))
-  to-array<Shape>(attached_shapes)[0]
+  add_connection(design, index_1, index_base, connection_point(bounds(side1), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), 0.0f, dovetail_blind_primitive)
+  add_connection(design, index_2, index_base, connection_point(bounds(side2), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), 0.0f, dovetail_blind_primitive)
+  add_connection(design, index_3, index_base, connection_point(bounds(side3), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), 90.0f, dovetail_blind_primitive)
+  add_connection(design, index_4, index_base, connection_point(bounds(side4), V3f(0.5f, 0.5f, 0.0f)), V3f(0.0f, 0.0f, -1.0f), 90.0f, dovetail_blind_primitive)
+  design
+
+public defn table_design (d:Float, jw:Float, wt:Float) :
+  val design = new_design(jw, wt)
+  val h_primitive = extrude(woodThickness(design), rect(d, woodThickness(design)))
+  val v_primitive = extrude(woodThickness(design), rect(woodThickness(design), d - 2.0f * woodThickness(design)))
+  val leg_primitive = extrude(d, square(woodThickness(design)))
+  val h_side_bottom = mov-x(0.0f, h_primitive)
+  val edge_width = woodThickness(design) / 2.0f / d
+  val v_side_left = attach_shapes(v_primitive, V3f(0.5f, 0.0f, 0.5f), h_side_bottom, V3f(edge_width, 1.0f, 0.5f))
+  val v_side_right = attach_shapes(v_primitive, V3f(0.5f, 0.0f, 0.5f), h_side_bottom, V3f(1.0f - edge_width, 1.0f, 0.5f))
+  val h_side_top = attach_shapes(h_primitive, V3f(edge_width, 0.0f, 0.5f), v_side_left, V3f(0.5f, 1.0f, 0.5f))
+  val leg_1 = attach_shapes(leg_primitive, V3f(0.5f, 0.5f, 1.0f), h_side_bottom, V3f(edge_width, 0.5f, 0.0f))
+  val leg_2 = attach_shapes(leg_primitive, V3f(0.5f, 0.5f, 1.0f), h_side_bottom, V3f(1.0f - edge_width, 0.5f, 0.0f))
+  val leg_3 = attach_shapes(leg_primitive, V3f(0.5f, 0.5f, 1.0f), h_side_top, V3f(1.0f - edge_width, 0.5f, 0.0f))
+  val leg_4 = attach_shapes(leg_primitive, V3f(0.5f, 0.5f, 1.0f), h_side_top, V3f(edge_width, 0.5f, 0.0f))
+
+  val index_hb = add_shape(design, h_side_bottom)
+  val index_ht = add_shape(design, h_side_top)
+  val index_vl = add_shape(design, v_side_left)
+  val index_vr = add_shape(design, v_side_right)
+
+  ;;val index1 = add_shape(design, leg_1)
+  ;;val index2 = add_shape(design, leg_2)
+  ;;val index3 = add_shape(design, leg_3)
+  ;;val index4 = add_shape(design, leg_4)
+
+  add_connection(design, index_hb, index_vl, connection_point(bounds(h_side_bottom), V3f(edge_width, 1.0f, 0.5f)), V3f(0.0f, 1.0f, 0.0f), 0.0f, dovetail_dado_primitive)
+  add_connection(design, index_hb, index_vr, connection_point(bounds(h_side_bottom), V3f(1.0f - edge_width, 1.0f, 0.5f)), V3f(0.0f, 1.0f, 0.0f), 0.0f, dovetail_dado_primitive)
+
+  ;;add_connection(design, index_ht, index_vl, connection_point(bounds(h_side_top), V3f(edge_width, 0.0f, 0.5f)), V3f(0.0f, -1.0f, 0.0f), 0.0f, dovetail_dado_primitive)
+  ;;add_connection(design, index_ht, index_vr, connection_point(bounds(h_side_top), V3f(1.0f - edge_width, 0.0f, 0.5f)), V3f(0.0f, -1.0f, 0.0f), 0.0f, dovetail_dado_primitive)
+  design
+  ;;to_stl(union([h_side_top, h_side_bottom, v_side_left, v_side_right, leg_1, leg_2, leg_3, leg_4]))
+public defn grid_design () :
+  set-resolution(1.0f)
+  val outside = extrude(1.0f, circle(1.0f))
+  println(to-mesh(outside))
+  outside

@@ -14,7 +14,7 @@ defpackage tests :
 val num_slices:Int = 6
 
 defn test_gooseneck () :
-  val design = new_design(1.0f,2.0f)
+  val design = new_design(5.0f,10.0f)
   var side1 = extrude(woodThickness(design), rect(10.0f, 10.0f))
   var side2 = extrude(woodThickness(design), rect(10.0f, 10.0f))
   val sides_attached = attach(side1, connection_point(bounds(side1), V3f(1.0f, 0.5f, 0.5f)),side2, connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f)))
@@ -22,25 +22,27 @@ defn test_gooseneck () :
   val side2_attach = to-array<Shape>(sides_attached)[1]
   val index1 = add_shape(design, side1_attach)
   val index2 = add_shape(design, side2_attach)
-
+  var c_align = 0.0f
   var c_point = connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f))
   var c_angle = V3f(1.0f, 0.0f, 0.0f)
-  add_connection(design, index1, index2, c_point, c_angle, gooseneck_primitive)
-  write_design_debug(design, "gooseneck_test")
+  add_connection(design, index1, index2, c_point, c_angle, c_align, gooseneck_primitive)
+  write_design(design, "gooseneck_test", 5)
 defn test_dado () :
-  val design = new_design(1.0f, 2.0f)
-  var side1 = extrude(woodThickness(design), rect(10.0f, 10.0f))
-  var side2 = extrude(woodThickness(design), rect(10.0f, 10.0f))
-  val sides_attached = attach(side1, connection_point(bounds(side1), V3f(1.0f, 0.5f, 0.5f)),side2, connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f)))
+  set-resolution(10.0f)
+  val design = new_design(5.0f, 10.0f)
+  var side1 = extrude(woodThickness(design), rect(20.0f, 20.0f))
+  var side2 = extrude(woodThickness(design), rect(20.0f, 20.0f))
+  val sides_attached = attach(side1, connection_point(bounds(side1), V3f(0.5f, 0.0f, 0.5f)),side2, connection_point(bounds(side2), V3f(0.5f, 1.0f, 0.5f)))
   val side1_attach = to-array<Shape>(sides_attached)[0]
   val side2_attach = to-array<Shape>(sides_attached)[1]
   val index1 = add_shape(design, side1_attach)
   val index2 = add_shape(design, side2_attach)
-
-  var c_point = connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f))
-  var c_angle = V3f(1.0f, 0.0f, 0.0f)
-  add_connection(design, index1, index2, c_point, c_angle, dovetail_dado_primitive)
-  write_design_debug(design, "dovetail_dado_test")
+  var c_align = 0.0f
+  var c_point = connection_point(bounds(side2), V3f(0.5f, 1.0f, 0.5f))
+  var c_angle = V3f(0.0f, 1.0f, 0.0f)
+  add_connection(design, index1, index2, c_point, c_angle, c_align, dovetail_dado_primitive)
+  write_design_debug(design, "dovetail_dado_debug")
+  write_design(design, "dovetail_dado_test", 4)
 
 defn test_dovetail () :
   val design = new_design(1.0f, 2.0f)
@@ -51,17 +53,27 @@ defn test_dovetail () :
   val side2_attach = to-array<Shape>(sides_attached)[1]
   val index1 = add_shape(design, side1_attach)
   val index2 = add_shape(design, side2_attach)
-
+  var c_align = 0.0f
   var c_point = connection_point(bounds(side2), V3f(0.0f, 0.5f, 0.5f))
   var c_angle = V3f(1.0f, 0.0f, 0.0f)
-  add_connection(design, index1, index2, c_point, c_angle, dovetail_blind_primitive)
+  add_connection(design, index1, index2, c_point, c_angle, c_align, dovetail_blind_primitive)
   write_design_debug(design, "dovetail_test")
 
 defn test_cube () :
-  val d = 5.0f
-  val wt = 1.0f
-  val jw = 0.5f
-  cube_design(d, jw, wt)
+  val size_mm = 50.0f
+  val d = 50.0f / mm_to_point
+  val wt = d / 5.0f
+  val jw = d / 10.0f
+  val design = cube_design(d, jw, wt)
+  write_design_debug(design, "cube_design")
+defn test_grid () :
+  grid_design()
+
+defn test_table () :
+  val d = table_design(10.0f, 2.0f, 2.0f)
+  write_design_debug(d, "table_test")
+;;float = 1.0f ->one point with 50.0f resolution ~ 1mm
+;;float = 1.0f ->one point with 10.0f of resolution ~ 1mm
 defn main () :
-  test_cube()
+  test_dado()
 main()

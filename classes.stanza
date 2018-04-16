@@ -7,6 +7,8 @@ defpackage classes :
   import font
   import libfive
 
+
+
 public defstruct Design :
   connections : Vector<Connection>
   shapes : Vector<Shape>
@@ -20,6 +22,7 @@ public defstruct Connection :
   femaleIndex : Int
   cPoint : V3f
   cAngle : V3f
+  connectorTilt: Float
   joint : (Float,Float, Float) -> [Shape, Tuple<Shape>]
 
 public defn new_design (joint_size:Float, wood_thickness:Float) :
@@ -39,6 +42,6 @@ public defn set_shape (design:Design, index:Int, shape:Shape) :
 public defn num_shapes (design:Design) :
   length(shapes(design))
 
-public defn add_connection (design:Design, male_index:Int, female_index:Int, cp:V3f, cangle:V3f, key:(Float,Float,Float) -> [Shape, Tuple<Shape>]) :
-  val connection = Connection(male_index, female_index, cp, cangle, key)
+public defn add_connection (design:Design, male_index:Int, female_index:Int, cp:V3f, cangle:V3f, c_align:Float, key:(Float,Float,Float) -> [Shape, Tuple<Shape>]) :
+  val connection = Connection(male_index, female_index, cp, cangle, c_align, key)
   add(connections(design), connection)

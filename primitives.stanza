@@ -8,8 +8,6 @@ defpackage primitives :
   import libfive
   import utilities
 
-val wood_thickness:Float = 4.0f
-
 public defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
   var point1 = V2f(-1.0f * base1 / 2.0f ,-1.0f * height / 2.0f)
   var point2 = V2f(base1 / 2.0f, -1.0f * height / 2.0f)

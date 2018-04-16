@@ -9,7 +9,9 @@ defpackage utilities :
   import classes
 
 var ind:Int = 0
-
+public val mm_to_point = 2.83465f
+public val inch_to_mm = 25.4f
+public val width_piece = mm_to_point * inch_to_mm * 1.0f / 8.0f
 ;; Utility Functions
 
 ;;based off of x,y,z selector functions, generate a connection point between two shapes.
@@ -28,18 +30,41 @@ public defn point_selector (proportions:V3f) -> (Box3f -> V3f) :
     V3f(x1, y1, z1)
   custom_point_selector
 
+public defn range_axis (shape:Shape, axis:V3f -> Float) :
+  axis(hi(bounds(shape))) - axis(lo(bounds(shape)))
+
 ;;Functions for writing to disk
 public defn to_stl (shape:Shape):
-  set-resolution(50.0f)
+  set-resolution(15.0f)
   save(string-join(["test", to-string(ind), ".stl"]), shape)
   ind = ind + 1
 
-public defn to_svg (slices:Tuple<Polygon>) :
-  val size = V2f(25.0f, 10.0f)
-  val sheets = nest(slices, size, { polygon-rect(xy(_)) }, 1.0f)
-  for (sheet in sheets, i in 0 to false) do :
-    svg(sheet, to-string $ ("%_-sheet-%_.svg" % ["test", i]), dims-to-box $ size)
+;;Function for drawing red lines
+defn rgb_red (polygon:Polygon) :
+  rgb(RED, polygon)
 
+public defn to_svg (slices:Tuple<Polygon>, filename:String) :
+  set-resolution(150.0f)
+  val grouped = group(stack-x(map(rgb_red, slices)))
+  svg(grouped, string-join(["test", to-string(ind), ".svg"]), V2f(100.0f, 10.0f))
+  ind = ind + 1
+
+;;Attach shape 1 to shape 2 based on points and return shape1
+public defn attach_shapes (shape1:Shape, location1:V3f, shape2:Shape, location2:V3f) -> Shape :
+  val attached_shapes = attach(shape1, connection_point(bounds(shape1), location1), shape2, connection_point(bounds(shape2), location2))
+  to-array<Shape>(attached_shapes)[0]
+
+public defn lay_flat (shape:Shape) :
+  val x_range = range_axis(shape, x)
+  val y_range = range_axis(shape, y)
+  val z_range = range_axis(shape, z)
+  val min_range = minimum([x_range, y_range, z_range])
+  if x_range == min_range :
+    rot-y(90.0f, rot-x(90.0f, shape))
+  else if y_range == min_range :
+    rot-x(90.0f, rot-y(90.0f, shape))
+  else :
+    shape
 ;;generate_point to write to stl for debugging
 public defn generate_point (location:V3f) -> Shape :
   var c = cube(1.0f)
