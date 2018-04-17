@@ -8,6 +8,8 @@ defpackage primitives :
   import libfive
   import utilities
 
+
+
 public defn trapezoid (base1:Float, base2:Float, height:Float) -> Polygon:
   var point1 = V2f(-1.0f * base1 / 2.0f ,-1.0f * height / 2.0f)
   var point2 = V2f(base1 / 2.0f, -1.0f * height / 2.0f)
@@ -56,8 +58,8 @@ public defn gooseneck_primitive (width:Float, length:Float, wood_thickness:Float
   joint = union(attach(middle_tenon, connection_point(bounds(middle_tenon), V3f(0.5f, 0.0f, 1.0f)), joint, connection_point(bounds(joint), V3f(0.5f, 0.0f, 0.0f))))
   [mov-z(0.5f, joint), [lower_pin_location, upper_pin_location]]
 
-public defn pin_primitive (pin_diameter:Float, wood_thickness:Float) :
-  cylinder(pin_diameter, wood_thickness)
+public defn pin_primitive (pin_width:Float, wood_thickness:Float) :
+  extrude(wood_thickness, square(pin_width))
 
 
 public defn tenon (dimensions:V3f) -> Shape:

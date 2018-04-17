@@ -38,11 +38,10 @@ defn test_dado () :
   val index1 = add_shape(design, side1_attach)
   val index2 = add_shape(design, side2_attach)
   var c_align = 0.0f
-  var c_point = connection_point(bounds(side2), V3f(0.5f, 1.0f, 0.5f))
-  var c_angle = V3f(0.0f, 1.0f, 0.0f)
+  var c_point = connection_point(bounds(side1_attach), V3f(0.5f, 0.0f, 0.5f))
+  var c_angle = V3f(0.0f, -1.0f, 0.0f)
   add_connection(design, index1, index2, c_point, c_angle, c_align, dovetail_dado_primitive)
   write_design_debug(design, "dovetail_dado_debug")
-  write_design(design, "dovetail_dado_test", 4)
 
 defn test_dovetail () :
   val design = new_design(1.0f, 2.0f)
@@ -70,10 +69,10 @@ defn test_grid () :
   grid_design()
 
 defn test_table () :
-  val d = table_design(10.0f, 2.0f, 2.0f)
-  write_design_debug(d, "table_test")
+  val d = table_design(5.0f * inch_to_mm * mm_to_point, inch_to_mm * mm_to_point, inch_to_mm * mm_to_point)
+  write_design(d, "table_test", 4)
 ;;float = 1.0f ->one point with 50.0f resolution ~ 1mm
 ;;float = 1.0f ->one point with 10.0f of resolution ~ 1mm
 defn main () :
-  test_dado()
+  test_table()
 main()

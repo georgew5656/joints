@@ -6,8 +6,8 @@ defpackage classes :
   import clipper
   import font
   import libfive
-
-
+  import utilities
+  import primitives
 
 public defstruct Design :
   connections : Vector<Connection>
@@ -16,6 +16,7 @@ public defstruct Design :
   jointLength : Float
   pinDiameter : Float
   woodThickness : Float
+  numPins : Int with : (setter => set-numPins)
 
 public defstruct Connection :
   maleIndex : Int
@@ -25,13 +26,19 @@ public defstruct Connection :
   connectorTilt: Float
   joint : (Float,Float, Float) -> [Shape, Tuple<Shape>]
 
+public defn add_design_pins (design:Design, n_pins:Int) :
+  val current = numPins(design)
+  set-numPins(design, current + n_pins)
+
 public defn new_design (joint_size:Float, wood_thickness:Float) :
-  Design(Vector<Connection>(), Vector<Shape>(), joint_size, joint_size * 1.5f, joint_size / 4.0f, wood_thickness)
+  Design(Vector<Connection>(), Vector<Shape>(), joint_size, joint_size * 1.5f, joint_size / 4.0f, wood_thickness, 0)
 
 public defn add_shape (design:Design, shape:Shape) -> Int:
   val i:Int = length(shapes(design))
   add(shapes(design), shape)
   i
+
+
 
 public defn get_shape (design:Design, index:Int) :
   shapes(design)[index]

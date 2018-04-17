@@ -44,9 +44,12 @@ defn rgb_red (polygon:Polygon) :
   rgb(RED, polygon)
 
 public defn to_svg (slices:Tuple<Polygon>, filename:String) :
-  set-resolution(150.0f)
-  val grouped = group(stack-x(map(rgb_red, slices)))
-  svg(grouped, string-join(["test", to-string(ind), ".svg"]), V2f(100.0f, 10.0f))
+  set-resolution(15.0f)
+  val stacked = to-array<Polygon>(stack-x(map(rgb_red, slices)))
+  val add_partitions = Array<Polygon>(length(stacked))
+  for i in 0 to length(add_partitions) do :
+    add_partitions[i] = mov-x(5.0f * to-float(i), stacked[i])
+  svg(group(to-tuple(add_partitions)), string-join(["test", to-string(ind), ".svg"]), V2f(100.0f, 30.0f))
   ind = ind + 1
 
 ;;Attach shape 1 to shape 2 based on points and return shape1
@@ -58,10 +61,9 @@ public defn lay_flat (shape:Shape) :
   val x_range = range_axis(shape, x)
   val y_range = range_axis(shape, y)
   val z_range = range_axis(shape, z)
-  val min_range = minimum([x_range, y_range, z_range])
-  if x_range == min_range :
+  if x_range < z_range and x_range < y_range :
     rot-y(90.0f, rot-x(90.0f, shape))
-  else if y_range == min_range :
+  else if y_range < z_range :
     rot-x(90.0f, rot-y(90.0f, shape))
   else :
     shape

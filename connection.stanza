@@ -20,11 +20,10 @@ public defn add_pin (shape:Shape, pin_location:V3f, pin_diameter:Float, design:D
   [pinned_shape, pin_centered]
 
 ;; add connector joints to the male, female shapes.
-public defn add_connectors (design:Design) -> Tuple<Shape>:
+public defn add_connectors (design:Design) :
   val joint_width = jointWidth(design)
   val joint_length = jointLength(design)
   val wood_thickness = woodThickness(design)
-  var pins = List()
   for connection in connections(design) do :
     var c_point = cPoint(connection)
     var c_angle = cAngle(connection)
@@ -32,26 +31,23 @@ public defn add_connectors (design:Design) -> Tuple<Shape>:
     var male_shape = get_shape(design, maleIndex(connection))
     var female_shape = get_shape(design, femaleIndex(connection))
     var joint_function = joint(connection)
-    val [joint_male_shape, pin_locations] = add_connection_male(male_shape, c_point, c_angle, c_align, joint_function, joint_width, joint_length, wood_thickness)
+    val [joint_male_shape, num_pins] = add_connection_male(male_shape, c_point, c_angle, c_align, joint_function, joint_width, joint_length, wood_thickness)
     val joint_female_shape  = add_connection_female(female_shape, c_point, c_angle, c_align, joint_function, joint_width, joint_length, wood_thickness)
-    pins = append(pin_locations, pins)
+    add_design_pins(design, num_pins)
     set_shape(design, maleIndex(connection), joint_male_shape)
     set_shape(design, femaleIndex(connection), joint_female_shape)
-  to-tuple(to-seq(pins))
-public defn add_connection_male (shape:Shape, c_point:V3f, c_angle:V3f, c_align:Float, joint:(Float, Float, Float) -> [Shape, Tuple<Shape>], w:Float, l:Float, wood_thickness:Float) -> [Shape, Tuple<Shape>]:
+public defn add_connection_male (shape:Shape, c_point:V3f, c_angle:V3f, c_align:Float, joint:(Float, Float, Float) -> [Shape, Tuple<Shape>], w:Float, l:Float, wood_thickness:Float) -> [Shape, Int]:
   val [connector, pin_locations] = joint(w, l, wood_thickness)
   var pinned_connector = center_z(connector)
   for pin in pin_locations do :
     pinned_connector = rem(pinned_connector, center_z(pin))
   val connector_cp = connection_point(bounds(pinned_connector), V3f(0.5f, 0.0f, 0.5f))
   val new_connector_cp = times(magnitude(connector_cp), -1.0f * c_angle)
-  println([connector_cp, new_connector_cp])
-  val rotated_connector = rot(connector_cp, new_connector_cp, pinned_connector)
-  println(rotated_connector)
-  println(pinned_connector)
-  to_stl(union([rotated_connector, pinned_connector]))
+  var rotated_connector = rot(connector_cp, new_connector_cp, pinned_connector)
+  if y(c_angle) == -1.0f :
+    rotated_connector = rot-z(180.0f, rotated_connector)
   val shape_connector = union(attach(rotated_connector, new_connector_cp, shape, c_point))
-  [shape_connector, pin_locations]
+  [shape_connector, length(pin_locations)]
   ;;var rotated_cp = y3f(magnitude(cp))
   ;;var rotated_shape = rot(cp, rotated_cp, shape)
   ;;val [connector, pin_locations] = key(width, l)
@@ -62,14 +58,16 @@ public defn add_connection_male (shape:Shape, c_point:V3f, c_angle:V3f, c_align:
   ;;var joint = union(attach(pinned_connector, connector_cp, rotated_shape, rotated_cp))
   ;;rot(rotated_cp, cp, joint)
 
-public defn add_connection_female (shape:Shape, c_point:V3f, c_angle:V3f, c_align:Float, joint:(Float, Float, Float) -> [Shape, Tuple<Shape>], w:Float, l:Float, wood_thickness:Float) -> Shape:
+public defn add_connection_female (shape:Shape, c_point:V3f, c_angle:V3f, c_align:Float, joint:(Float, Float, Float) -> [Shape, Tuple<Shape>], w:Float, l:Float, wood_thickness:Float) -> Shape :
   val [connector, pin_locations] = joint(w, l, wood_thickness)
   var pinned_connector = center_z(connector)
   for pin in pin_locations do :
     pinned_connector = bit-or(pinned_connector, center_z(pin))
   val connector_cp = connection_point(bounds(pinned_connector), V3f(0.5f, 0.0f, 0.5f))
   val new_connector_cp = times(magnitude(connector_cp), -1.0f * normalize(c_angle))
-  val rotated_connector = rot(connector_cp, new_connector_cp, pinned_connector)
+  var rotated_connector = rot(connector_cp, new_connector_cp, pinned_connector)
+  if y(c_angle) == -1.0f :
+    rotated_connector = rot-z(180.0f, rotated_connector)
   val attached_pieces = to-array<Shape>(attach(rotated_connector, new_connector_cp, shape, c_point))
   val shape_connector = rem(attached_pieces[1], attached_pieces[0])
   shape_connector
