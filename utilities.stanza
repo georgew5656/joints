@@ -52,6 +52,9 @@ public defn to_svg (slices:Tuple<Polygon>, filename:String) :
   svg(group(to-tuple(add_partitions)), string-join(["test", to-string(ind), ".svg"]), V2f(100.0f, 30.0f))
   ind = ind + 1
 
+public defn copy (shape:Shape) -> Shape :
+  mov-x(0.0f, shape)
+
 ;;Attach shape 1 to shape 2 based on points and return shape1
 public defn attach_shapes (shape1:Shape, location1:V3f, shape2:Shape, location2:V3f) -> Shape :
   val attached_shapes = attach(shape1, connection_point(bounds(shape1), location1), shape2, connection_point(bounds(shape2), location2))

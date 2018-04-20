@@ -71,8 +71,14 @@ defn test_grid () :
 defn test_table () :
   val d = table_design(5.0f * inch_to_mm * mm_to_point, inch_to_mm * mm_to_point, inch_to_mm * mm_to_point)
   write_design(d, "table_test", 4)
+  val e = table_design(5.0f * inch_to_mm * mm_to_point / 10.0f, inch_to_mm * mm_to_point / 10.0f, inch_to_mm * mm_to_point / 10.0f)
+  write_design_debug(e, "table_test")
 ;;float = 1.0f ->one point with 50.0f resolution ~ 1mm
 ;;float = 1.0f ->one point with 10.0f of resolution ~ 1mm
+
+defn test_circle () :
+  val d = circle_design(5.0f * inch_to_mm * mm_to_point, inch_to_mm * mm_to_point, 4)
+  []
 defn main () :
   test_table()
 main()
